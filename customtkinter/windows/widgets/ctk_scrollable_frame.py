@@ -27,6 +27,7 @@ class CTkScrollableFrame(tkinter.Frame, CTkAppearanceModeBaseClass, CTkScalingBa
                  bg_color: Union[str, Tuple[str, str]] = "transparent",
                  fg_color: Optional[Union[str, Tuple[str, str]]] = None,
                  border_color: Optional[Union[str, Tuple[str, str]]] = None,
+                 scrollbar_thickness: int = 16,
                  scrollbar_fg_color: Optional[Union[str, Tuple[str, str]]] = None,
                  scrollbar_button_color: Optional[Union[str, Tuple[str, str]]] = None,
                  scrollbar_button_hover_color: Optional[Union[str, Tuple[str, str]]] = None,
@@ -39,6 +40,7 @@ class CTkScrollableFrame(tkinter.Frame, CTkAppearanceModeBaseClass, CTkScalingBa
                  orientation: Literal["vertical", "horizontal"] = "vertical"):
 
         self._orientation = orientation
+        self._scrollbar_thickness = scrollbar_thickness
 
         # dimensions independent of scaling
         self._desired_width = width  # _desired_width and _desired_height, represent desired size set by width and height
@@ -50,11 +52,11 @@ class CTkScrollableFrame(tkinter.Frame, CTkAppearanceModeBaseClass, CTkScalingBa
         self._set_scroll_increments()
 
         if self._orientation == "horizontal":
-            self._scrollbar = CTkScrollbar(master=self._parent_frame, orientation="horizontal", command=self._parent_canvas.xview,
+            self._scrollbar = CTkScrollbar(master=self._parent_frame, height=self._scrollbar_thickness, orientation="horizontal", command=self._parent_canvas.xview,
                                            fg_color=scrollbar_fg_color, button_color=scrollbar_button_color, button_hover_color=scrollbar_button_hover_color)
             self._parent_canvas.configure(xscrollcommand=self._scrollbar.set)
         elif self._orientation == "vertical":
-            self._scrollbar = CTkScrollbar(master=self._parent_frame, orientation="vertical", command=self._parent_canvas.yview,
+            self._scrollbar = CTkScrollbar(master=self._parent_frame, width=self._scrollbar_thickness, orientation="vertical", command=self._parent_canvas.yview,
                                            fg_color=scrollbar_fg_color, button_color=scrollbar_button_color, button_hover_color=scrollbar_button_hover_color)
             self._parent_canvas.configure(yscrollcommand=self._scrollbar.set)
 
@@ -176,6 +178,12 @@ class CTkScrollableFrame(tkinter.Frame, CTkAppearanceModeBaseClass, CTkScalingBa
             for child in self.winfo_children():
                 if isinstance(child, CTkBaseClass):
                     child.configure(bg_color=self._parent_frame.cget("fg_color"))
+                    
+        if "scrollbar_thickness" in kwargs:
+            if self._orientation == "horizontal":
+                self._scrollbar.configure(height=kwargs.pop("scrollbar_thickness"))
+            elif self._orientation == "vertical":
+                self._scrollbar.configure(width=kwargs.pop("scrollbar_thickness"))
 
         if "scrollbar_fg_color" in kwargs:
             self._scrollbar.configure(fg_color=kwargs.pop("scrollbar_fg_color"))
@@ -221,7 +229,12 @@ class CTkScrollableFrame(tkinter.Frame, CTkAppearanceModeBaseClass, CTkScalingBa
             return self._label.cget("fg_color")
         elif attribute_name == "label_anchor":
             return self._label.cget("anchor")
-
+        
+        elif attribute_name.startswith("scrollbar_thickness"):
+            if self._orientation == "horizontal":
+                return self._scrollbar.cget("height")
+            elif self._orientation == "vertical":
+                return self._scrollbar.cget("width")
         elif attribute_name.startswith("scrollbar_fg_color"):
             return self._scrollbar.cget("fg_color")
         elif attribute_name.startswith("scrollbar_button_color"):
